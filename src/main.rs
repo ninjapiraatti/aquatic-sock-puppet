@@ -9,7 +9,16 @@ use esp_backtrace as _;
 use esp_println::println;
 use hal::{
     clock::ClockControl,
-    gpio::{Event, Gpio6, Input, PullDown, IO},
+    gpio::{
+        Event,
+        Gpio4,
+        Gpio6,
+        Input,
+        Output,
+        PullDown,
+        IO,
+        PushPull
+    },
     peripherals::{self, Peripherals},
     interrupt,
     prelude::*,
@@ -22,6 +31,7 @@ use hal::{systimer::SystemTimer, Rng};
 #[global_allocator]
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 static BUTTON: Mutex<RefCell<Option<Gpio6<Input<PullDown>>>>> = Mutex::new(RefCell::new(None));
+static LED: Mutex<RefCell<Option<Gpio4<Output<PushPull>>>>> = Mutex::new(RefCell::new(None));
 
 fn init_heap() {
     const HEAP_SIZE: usize = 32 * 1024;
@@ -51,13 +61,13 @@ fn main() -> ! {
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
     let mut test_input = io.pins.gpio6.into_pull_down_input();
     let mut led = io.pins.gpio4.into_push_pull_output();
+    led.set_high().unwrap();
     test_input.listen(Event::FallingEdge);
 
     critical_section::with(|cs| BUTTON.borrow_ref_mut(cs).replace(test_input));
+    critical_section::with(|cs| LED.borrow_ref_mut(cs).replace(led));
 
     interrupt::enable(peripherals::Interrupt::GPIO, interrupt::Priority::Priority3).unwrap();
-
-    led.set_high().unwrap();
 
     let timer = SystemTimer::new(peripherals.SYSTIMER).alarm0;
     let _init = initialize(
@@ -92,5 +102,12 @@ fn GPIO() {
             .as_mut()
             .unwrap()
             .clear_interrupt();
+        if let Some(led) = LED.borrow_ref_mut(cs).as_mut() {
+            if led.is_set_high().unwrap() {
+                led.set_low().unwrap();
+            } else {
+                led.set_high().unwrap();
+            }
+        }
     });
 }

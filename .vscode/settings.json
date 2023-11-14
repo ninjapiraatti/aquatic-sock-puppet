@@ -1,3 +1,4 @@
 {
     "rust-analyzer.checkOnSave.allTargets": false,
+    "idf.port": "/dev/cu.usbserial-1140",
 }

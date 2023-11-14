@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+/Users/ninjapiraatti/Projektit/aquatic-sock-puppet/build/CMakeFiles/bootloader
+/Users/ninjapiraatti/Projektit/aquatic-sock-puppet/build/CMakeFiles/bootloader.rule
+/Users/ninjapiraatti/Projektit/aquatic-sock-puppet/build/CMakeFiles/bootloader-complete.rule
+/Users/ninjapiraatti/Projektit/aquatic-sock-puppet/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+/Users/ninjapiraatti/Projektit/aquatic-sock-puppet/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+/Users/ninjapiraatti/Projektit/aquatic-sock-puppet/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+/Users/ninjapiraatti/Projektit/aquatic-sock-puppet/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+/Users/ninjapiraatti/Projektit/aquatic-sock-puppet/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+/Users/ninjapiraatti/Projektit/aquatic-sock-puppet/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+/Users/ninjapiraatti/Projektit/aquatic-sock-puppet/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule
