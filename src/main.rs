@@ -1,0 +1,96 @@
+#![no_std]
+#![no_main]
+
+extern crate alloc;
+use core::cell::RefCell;
+use critical_section::Mutex;
+use core::mem::MaybeUninit;
+use esp_backtrace as _;
+use esp_println::println;
+use hal::{
+    clock::ClockControl,
+    gpio::{Event, Gpio6, Input, PullDown, IO},
+    peripherals::{self, Peripherals},
+    interrupt,
+    prelude::*,
+    Delay
+};
+
+use esp_wifi::{initialize, EspWifiInitFor};
+
+use hal::{systimer::SystemTimer, Rng};
+#[global_allocator]
+static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
+static BUTTON: Mutex<RefCell<Option<Gpio6<Input<PullDown>>>>> = Mutex::new(RefCell::new(None));
+
+fn init_heap() {
+    const HEAP_SIZE: usize = 32 * 1024;
+    static mut HEAP: MaybeUninit<[u8; HEAP_SIZE]> = MaybeUninit::uninit();
+
+    unsafe {
+        ALLOCATOR.init(HEAP.as_mut_ptr() as *mut u8, HEAP_SIZE);
+    }
+}
+#[entry]
+fn main() -> ! {
+    init_heap();
+    let peripherals = Peripherals::take();
+    let system = peripherals.SYSTEM.split();
+    let clocks = ClockControl::max(system.clock_control).freeze();
+    let mut delay = Delay::new(&clocks);
+
+    // setup logger
+    // To change the log_level change the env section in .cargo/config.toml
+    // or remove it and set ESP_LOGLEVEL manually before running cargo run
+    // this requires a clean rebuild because of https://github.com/rust-lang/cargo/issues/10358
+    esp_println::logger::init_logger_from_env();
+    log::info!("Logger is setup");
+    println!("Hello worldddd!");
+
+    // Set GPIO4 as an output, and set its state high initially.
+    let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+    let mut test_input = io.pins.gpio6.into_pull_down_input();
+    let mut led = io.pins.gpio4.into_push_pull_output();
+    test_input.listen(Event::FallingEdge);
+
+    critical_section::with(|cs| BUTTON.borrow_ref_mut(cs).replace(test_input));
+
+    interrupt::enable(peripherals::Interrupt::GPIO, interrupt::Priority::Priority3).unwrap();
+
+    led.set_high().unwrap();
+
+    let timer = SystemTimer::new(peripherals.SYSTIMER).alarm0;
+    let _init = initialize(
+        EspWifiInitFor::Wifi,
+        timer,
+        Rng::new(peripherals.RNG),
+        system.radio_clock_control,
+        &clocks,
+    )
+    .unwrap();
+    loop {
+        /*
+        if test_input.is_high().unwrap() {
+            delay.delay_ms(1500u32);
+            println!("HIGH");
+            led.set_high().unwrap();
+        } else {
+            led.set_low().unwrap();
+        }
+        */
+        delay.delay_ms(1500u32);
+        println!("HIGH");
+    }
+}
+
+#[interrupt]
+fn GPIO() {
+    critical_section::with(|cs| {
+        println!("GPIO interrupt");
+        BUTTON
+            .borrow_ref_mut(cs)
+            .as_mut()
+            .unwrap()
+            .clear_interrupt();
+    });
+}
