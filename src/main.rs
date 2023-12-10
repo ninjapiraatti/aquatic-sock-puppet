@@ -55,16 +55,15 @@ fn main() -> ! {
     // this requires a clean rebuild because of https://github.com/rust-lang/cargo/issues/10358
     esp_println::logger::init_logger_from_env();
     log::info!("Logger is setup");
-    println!("Hello worldddd!");
+    println!("Hello world!");
 
-    // Set GPIO4 as an output, and set its state high initially.
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    let mut test_input = io.pins.gpio6.into_pull_down_input();
+    let mut rotary_input = io.pins.gpio6.into_pull_down_input();
     let mut led = io.pins.gpio4.into_push_pull_output();
     led.set_high().unwrap();
-    test_input.listen(Event::FallingEdge);
+    rotary_input.listen(Event::FallingEdge);
 
-    critical_section::with(|cs| BUTTON.borrow_ref_mut(cs).replace(test_input));
+    critical_section::with(|cs| BUTTON.borrow_ref_mut(cs).replace(rotary_input));
     critical_section::with(|cs| LED.borrow_ref_mut(cs).replace(led));
 
     interrupt::enable(peripherals::Interrupt::GPIO, interrupt::Priority::Priority3).unwrap();
@@ -79,17 +78,7 @@ fn main() -> ! {
     )
     .unwrap();
     loop {
-        /*
-        if test_input.is_high().unwrap() {
-            delay.delay_ms(1500u32);
-            println!("HIGH");
-            led.set_high().unwrap();
-        } else {
-            led.set_low().unwrap();
-        }
-        */
         delay.delay_ms(1500u32);
-        println!("HIGH");
     }
 }
 
